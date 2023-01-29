@@ -43,6 +43,7 @@ export const addPromptIds = (root: Root): void => {
         list.data['id'] = c.attributes['id'];
       }
     }
+    return undefined;
   });
 };
 

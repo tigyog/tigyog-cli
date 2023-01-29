@@ -23,7 +23,7 @@ export const visitLists = (
       | FootnoteDefinition
       | ListItem
       | null,
-  ) => void,
+  ) => number | undefined,
 ): void => {
   visit(root, 'list', visitor);
 };
