@@ -1,6 +1,7 @@
 # TigYog.app CLI (BETA!)
 
 For context, see [TigYog.app](https://tigyog.app/) and [the TigYog docs](https://docs.tigyog.app/).
+For an example course being written with the TigYog CLI, see [_Eigenwhat?_](https://github.com/tigyog/eigenwhat).
 
 ## Installation and usage
 
