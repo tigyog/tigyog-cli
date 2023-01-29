@@ -1,0 +1,5 @@
+tmp
+node_modules
+tsconfig.tsbuildinfo
+.DS_Store
+dist

@@ -1,0 +1,40 @@
+{
+  "name": "tigyog-cli",
+  "version": "0.0.2",
+  "scripts": {
+    "build": "rm -rf dist && tsc --build",
+    "prepack": "npm run build",
+    "prune": "ts-prune"
+  },
+  "dependencies": {
+    "commander": "^10.0.0",
+    "conf": "^10.2.0",
+    "mime-types": "^2.1.35",
+    "nanoid": "^4.0.0",
+    "node-fetch": "^3.2.8",
+    "remark-directive": "^2.0.1",
+    "remark-frontmatter": "^4.0.1",
+    "remark-math": "^5.1.1",
+    "remark-parse": "^10.0.1",
+    "remark-stringify": "^10.0.2",
+    "unified": "^10.1.2",
+    "unist-util-visit": "^4.1.1",
+    "yaml": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^2.1.1",
+    "@types/node": "^18.11.18",
+    "ts-prune": "^0.10.3",
+    "typescript": "^4.9.4"
+  },
+  "type": "module",
+  "files": [
+    "/dist"
+  ],
+  "bin": {
+    "tigyog": "./bin/tigyog.js"
+  },
+  "engines": {
+    "node": ">=16.11"
+  }
+}
