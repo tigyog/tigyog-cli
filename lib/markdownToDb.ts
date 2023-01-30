@@ -269,8 +269,6 @@ export const fromMarkdownFile = async (
     encoding: 'utf8',
   });
 
-  const slug = basename(filepath).split('.')[0]!;
-
   const root = parseMarkdown(mdFileStr);
   addPromptIds(root);
 
@@ -290,7 +288,7 @@ export const fromMarkdownFile = async (
             )) as DbBlockCourseChild[], // FIXME
             texMacros: yaml['texMacros'] ?? '',
             priceUsdDollars: yaml['priceUsdDollars'] ?? 49,
-            slug: slug,
+            ...(yaml['slug'] ? { slug: yaml['slug'] } : {}),
           }
         : {
             type: 'root',
@@ -300,7 +298,7 @@ export const fromMarkdownFile = async (
             )) as DbBlockLessonChild[], // FIXME
             courseId: yaml['courseId'] ?? '', // TODO take from course page
             texMacros: yaml['texMacros'] ?? '',
-            slug: slug,
+            slug: basename(filepath).split('.')[0]!,
           },
   };
 };
