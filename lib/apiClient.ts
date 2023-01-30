@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { FormData } from 'node-fetch';
 
 import { getSession } from './config.js';
 import {
@@ -56,7 +57,7 @@ export const apiPutDocPublishedVersionNumber = async (
 };
 
 export const apiPostFile = async (
-  formData: FormData,
+  formData: typeof FormData,
 ): Promise<UploadFileResponseBody> => {
   const response = await fetch(urlToFiles, {
     method: 'POST',
