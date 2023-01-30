@@ -24,7 +24,6 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "target": "ES2021",
-    "tsBuildInfoFile": "tsconfig.tsbuildinfo", // Don't put it in dist; do not need to distribute
     "useUnknownInCatchVariables": true
   }
 }
