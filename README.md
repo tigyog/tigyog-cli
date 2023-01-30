@@ -14,6 +14,15 @@ $ tigyog fmt my_course            # Put your course content in directory my_cour
 $ tigyog publish my_course        # Push course content to TigYog.app and publish it
 ```
 
+## Publishing from git
+
+You might want to publish your course every time you push to a git repository.
+If you're using GitHub, you can use [GitHub Actions](https://docs.github.com/en/actions/quickstart) for this:
+
+1. On your GitHub repository, [add a secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+2. Name the secret `TY_SESSION` and copy the value from [your TigYog account page](https://tigyog.app/account).
+3. Add [a workflow file like this](https://github.com/tigyog/eigenwhat/blob/main/.github/workflows/publish.yml) to your repository.
+
 ## Planned features
 
 If you need any of these, or have any other problems,
@@ -25,6 +34,3 @@ If you need any of these, or have any other problems,
 * API keys.
   Currently authenticates using session tokens taken from the browser.
   These expire after around 6 months.
-
-* Publishing with GitHub actions.
-  We'll show an example of how to do this.
