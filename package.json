@@ -1,6 +1,6 @@
 {
   "name": "tigyog-cli",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "scripts": {
     "build": "rm -rf dist && tsc --build",
     "prepack": "npm run build",
