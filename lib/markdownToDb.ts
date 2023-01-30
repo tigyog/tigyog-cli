@@ -274,10 +274,16 @@ export const fromMarkdownFile = async (
 
   const yaml = getYAML(root);
 
+  const docId = yaml['id'];
+
+  if (typeof docId !== 'string') {
+    throw new Error(`Expected id in file ${filepath}`);
+  }
+
   const ctx: Ctx = { filepath };
 
   return {
-    docId: yaml['id'],
+    docId: docId,
     draftContent:
       yaml['type'] === 'course'
         ? {
@@ -286,9 +292,9 @@ export const fromMarkdownFile = async (
               ctx,
               root.children,
             )) as DbBlockCourseChild[], // FIXME
-            texMacros: yaml['texMacros'] ?? '',
-            priceUsdDollars: yaml['priceUsdDollars'] ?? 49,
-            ...(yaml['slug'] ? { slug: yaml['slug'] } : {}),
+            texMacros: (yaml['texMacros'] as string) ?? '',
+            priceUsdDollars: (yaml['priceUsdDollars'] as number) ?? 49,
+            ...(yaml['slug'] ? { slug: yaml['slug'] as string } : {}),
           }
         : {
             type: 'root',
@@ -296,8 +302,8 @@ export const fromMarkdownFile = async (
               ctx,
               root.children,
             )) as DbBlockLessonChild[], // FIXME
-            courseId: yaml['courseId'] ?? '', // TODO take from course page
-            texMacros: yaml['texMacros'] ?? '',
+            courseId: (yaml['courseId'] as string) ?? '', // TODO take from course page
+            texMacros: (yaml['texMacros'] as string) ?? '',
             slug: basename(filepath).split('.')[0]!,
           },
   };
