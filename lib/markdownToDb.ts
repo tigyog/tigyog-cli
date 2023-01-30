@@ -2,8 +2,8 @@ import * as fs from 'fs/promises';
 import { Content, List, ListItem, Paragraph } from 'mdast';
 import * as path from 'path';
 import { basename } from 'path';
+import { postCasFile } from './casClient.js';
 
-import { filepathToKey } from './casClient.js';
 import {
   addPromptIds,
   getOptionData,
@@ -42,11 +42,11 @@ const italicize = <T extends DbNode>(n: T): T => {
   }
 };
 
-const listItemToOption = (
+const listItemToOption = async (
   ctx: Ctx,
   promptId: string,
   listItem: ListItem,
-): [DbInlineOption, DbBlockResponse[]] => {
+): Promise<[DbInlineOption, DbBlockResponse[]]> => {
   const firstBlock = listItem.children[0];
 
   if (firstBlock === undefined) {
@@ -71,7 +71,7 @@ const listItemToOption = (
     {
       type: 'option',
       id: optionData.id,
-      children: fromNodes(ctx, firstBlock.children) as DbInline[],
+      children: (await fromNodes(ctx, firstBlock.children)) as DbInline[],
       ...(optionData.correct === null ? {} : { correct: optionData.correct }),
     },
     rest.length > 0
@@ -80,42 +80,36 @@ const listItemToOption = (
             type: 'response',
             toPromptId: promptId,
             optionIds: [optionData.id],
-            children: fromNodes(ctx, rest) as DbNonRootBlock[],
+            children: (await fromNodes(ctx, rest)) as DbNonRootBlock[],
           },
         ]
       : [],
   ];
 };
 
-const fromList = (ctx: Ctx, node: List): DbNonRootBlock[] => {
+const fromList = async (ctx: Ctx, node: List): Promise<DbNonRootBlock[]> => {
   const promptId = getPromptId(node);
   if (promptId) {
-    const out = node.children.map((li) => listItemToOption(ctx, promptId, li));
+    const out = await Promise.all(
+      node.children.map((li) => listItemToOption(ctx, promptId, li)),
+    );
     return [
       { type: 'prompt', id: promptId, children: out.map((o) => o[0]) },
       ...out.flatMap((o) => o[1]),
     ];
   } else {
-    return fromNodes(ctx, node.children) as DbNonRootBlock[];
+    return (await fromNodes(ctx, node.children)) as DbNonRootBlock[];
   }
 };
 
-const fromParagraph = (
+const fromParagraph = async (
   ctx: Ctx,
   node: Paragraph,
-): (DbBlockPara | DbBlockImage)[] => {
+): Promise<(DbBlockPara | DbBlockImage)[]> => {
   const firstChild = node.children[0];
   if (firstChild && firstChild.type === 'image') {
     const imgPath = path.join(path.dirname(ctx.filepath), firstChild.url);
-    const key = filepathToKey[imgPath];
-    if (!key) {
-      throw new Error(
-        'Unknown file: ' +
-          imgPath +
-          '; I know about ' +
-          JSON.stringify(filepathToKey),
-      );
-    }
+    const key = await postCasFile(imgPath);
 
     // Markdown images (like HTML) are considered inline,
     // but TigYog images are blocks.
@@ -128,12 +122,15 @@ const fromParagraph = (
     ];
   } else {
     return [
-      { type: 'p', children: fromNodes(ctx, node.children) as DbInline[] },
+      {
+        type: 'p',
+        children: (await fromNodes(ctx, node.children)) as DbInline[],
+      },
     ];
   }
 };
 
-const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
+const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
   switch (node.type) {
     // Block elements
     case 'code':
@@ -147,11 +144,17 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
     case 'heading':
       if (node.depth <= 1) {
         return [
-          { type: 'h1', children: fromNodes(ctx, node.children) as DbInline[] },
+          {
+            type: 'h1',
+            children: (await fromNodes(ctx, node.children)) as DbInline[],
+          },
         ];
       } else {
         return [
-          { type: 'h2', children: fromNodes(ctx, node.children) as DbInline[] },
+          {
+            type: 'h2',
+            children: (await fromNodes(ctx, node.children)) as DbInline[],
+          },
         ];
       }
     case 'image':
@@ -160,17 +163,21 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
     case 'list':
       return fromList(ctx, node);
     case 'listItem':
-      return node.children.flatMap((bl) =>
-        bl.type === 'paragraph'
-          ? [
+      return Promise.all(
+        node.children.map(async (bl): Promise<DbNode[]> => {
+          if (bl.type === 'paragraph') {
+            return [
               {
                 type: 'p',
                 listStyleType: 'disc',
-                children: fromNodes(ctx, bl.children) as DbInline[],
+                children: (await fromNodes(ctx, bl.children)) as DbInline[],
               },
-            ]
-          : (fromNode(ctx, bl) as DbNode[]),
-      );
+            ];
+          } else {
+            return (await fromNode(ctx, bl)) as DbNode[];
+          }
+        }),
+      ).then((x) => x.flat(1));
     case 'math':
       return [{ type: 'blockmath', children: [{ text: node.value }] }];
     case 'paragraph':
@@ -180,7 +187,7 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
     case 'break':
       return [{ type: 'br', children: [{ text: '' }] }];
     case 'emphasis':
-      return fromNodes(ctx, node.children).map(italicize);
+      return (await fromNodes(ctx, node.children)).map(italicize);
     case 'inlineCode':
       return [{ type: 'inlinecode', children: [{ text: node.value }] }];
     case 'inlineMath':
@@ -190,11 +197,11 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
         {
           type: 'link',
           href: node.url,
-          children: fromNodes(ctx, node.children) as DbInline[],
+          children: (await fromNodes(ctx, node.children)) as DbInline[],
         },
       ];
     case 'strong':
-      return fromNodes(ctx, node.children).map(bolden);
+      return (await fromNodes(ctx, node.children)).map(bolden);
     case 'text':
       return [{ text: node.value.replaceAll(/[\r\n]/g, ' ') }];
 
@@ -203,7 +210,10 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
         return [
           {
             type: 'lessonlink',
-            children: fromNodes(ctx, node.children) as DbBlockLinkChild[],
+            children: (await fromNodes(
+              ctx,
+              node.children,
+            )) as DbBlockLinkChild[],
             ...(node.attributes && node.attributes['id']
               ? { lessonId: node.attributes['id'] }
               : {}),
@@ -237,8 +247,8 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
   }
 };
 
-const fromNodes = (ctx: Ctx, nodes: Content[]) =>
-  nodes.flatMap((n) => fromNode(ctx, n));
+const fromNodes = (ctx: Ctx, nodes: Content[]): Promise<DbNode[]> =>
+  Promise.all(nodes.map((n) => fromNode(ctx, n))).then((x) => x.flat(1));
 
 export const fromMarkdownFile = async (
   filepath: string,
@@ -262,14 +272,20 @@ export const fromMarkdownFile = async (
       yaml['type'] === 'course'
         ? {
             type: 'course',
-            children: fromNodes(ctx, root.children) as DbBlockCourseChild[], // FIXME
+            children: (await fromNodes(
+              ctx,
+              root.children,
+            )) as DbBlockCourseChild[], // FIXME
             texMacros: yaml['texMacros'] ?? '',
             priceUsdDollars: yaml['priceUsdDollars'] ?? 49,
             slug: slug,
           }
         : {
             type: 'root',
-            children: fromNodes(ctx, root.children) as DbBlockLessonChild[], // FIXME
+            children: (await fromNodes(
+              ctx,
+              root.children,
+            )) as DbBlockLessonChild[], // FIXME
             courseId: yaml['courseId'] ?? '', // TODO take from course page
             texMacros: yaml['texMacros'] ?? '',
             slug: slug,
