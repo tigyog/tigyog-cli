@@ -29,7 +29,7 @@
   },
   "type": "module",
   "files": [
-    "/dist"
+    "/dist/**/*.js"
   ],
   "bin": {
     "tigyog": "./bin/tigyog.js"

@@ -5,7 +5,7 @@ import { apiPostFile } from './apiClient.js';
 
 export const filepathToKey: Record<string, string> = {};
 
-export const deployCasFile = async (filePath: string, mimeType: string) => {
+export const postCasFile = async (filePath: string, mimeType: string) => {
   console.log('  Posting file', filePath);
   const formData = new FormData();
   const buf = await fs.readFile(filePath);

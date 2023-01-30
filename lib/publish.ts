@@ -4,11 +4,11 @@ import {
   apiPostVersion,
   apiPutDocPublishedVersionNumber,
 } from './apiClient.js';
-import { deployCasFile } from './deployCasFile.js';
+import { postCasFile } from './casClient.js';
 import { fromMarkdownFile } from './markdownToDb.js';
 import { tree } from './tree.js';
 
-const deployMarkdownFile = async (filePath: string) => {
+const publishMarkdownFile = async (filePath: string) => {
   console.log('  Posting doc', filePath);
 
   const reqBody = await fromMarkdownFile(filePath);
@@ -30,7 +30,7 @@ const deployMarkdownFile = async (filePath: string) => {
   }
 };
 
-export async function deployCommand(courseDir: string) {
+export async function publishCommand(courseDir: string) {
   const casPaths: { filepath: string; mimeType: string }[] = [];
   const markdownPaths: string[] = [];
 
@@ -47,12 +47,12 @@ export async function deployCommand(courseDir: string) {
     }
   }
 
-  // Deploy all images first because we need their keys when deploying Markdown
+  // Post all images first because their keys are referenced by Markdown
   for (const { filepath, mimeType } of casPaths)
-    await deployCasFile(filepath, mimeType);
+    await postCasFile(filepath, mimeType);
 
   for (const markdownPath of markdownPaths)
-    await deployMarkdownFile(markdownPath);
+    await publishMarkdownFile(markdownPath);
 
-  console.log('Deployment complete');
+  console.log('Course published');
 }

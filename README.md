@@ -11,7 +11,7 @@ Requires Node.js 16.11 or newer.
 $ npm install -g tigyog-cli
 $ tigyog login y54wyu464432   # Content of TY_SESSION cookie from your browser
 $ tigyog fmt my_course        # Put your course content in directory my_course
-$ tigyog deploy my_course     # Push course content to TigYog.app
+$ tigyog publish my_course    # Push course content to TigYog.app and publish it
 ```
 
 ## Planned features
@@ -26,5 +26,5 @@ If you need any of these, or have any other problems,
   Currently uses session tokens taken from the browser.
   These expire after around 6 months.
 
-* Deployment with GitHub actions.
+* Publishing with GitHub actions.
   We'll show an example of how to do this.

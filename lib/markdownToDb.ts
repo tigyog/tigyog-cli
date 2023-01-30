@@ -3,7 +3,7 @@ import { Content, List, ListItem, Paragraph } from 'mdast';
 import * as path from 'path';
 import { basename } from 'path';
 
-import { filepathToKey } from './deployCasFile.js';
+import { filepathToKey } from './casClient.js';
 import {
   addPromptIds,
   getOptionData,

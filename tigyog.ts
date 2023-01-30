@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 
 import { setSession } from './lib/config.js';
-import { deployCommand } from './lib/deploy.js';
+import { publishCommand } from './lib/publish.js';
 import { fmtCommand } from './lib/fmt.js';
 
 const program = new Command();
@@ -10,7 +10,7 @@ program.name('tigyog').description('Official CLI for https://tigyog.app');
 
 program
   .command('fmt')
-  .description('Prepare files for deployment, e.g. add IDs to buttons')
+  .description('Prepare files for publishing, e.g. add IDs to buttons')
   .argument('<coursedir>', 'path to directory containing all course content')
   .action((courseDir) => {
     fmtCommand(courseDir);
@@ -18,7 +18,7 @@ program
 
 program
   .command('login')
-  .description('Log with your TigYog account, to allow deployment')
+  .description('Log with your TigYog account, to allow publishing')
   .argument(
     '<sessiontoken>',
     'get this from the TY_SESSION cookie in your browser',
@@ -28,11 +28,11 @@ program
   });
 
 program
-  .command('deploy')
+  .command('publish')
   .description('Publish course from local files')
   .argument('<coursedir>', 'path to directory containing all course content')
   .action((courseDir) => {
-    deployCommand(courseDir);
+    publishCommand(courseDir);
   });
 
 program.parse();
