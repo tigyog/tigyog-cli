@@ -1,20 +1,23 @@
 import * as fs from 'fs/promises';
 import { Content, List, ListItem, Paragraph } from 'mdast';
+import { ContainerDirective } from 'mdast-util-directive';
 import * as path from 'path';
 import { basename } from 'path';
-import { postCasFile } from './casClient.js';
 
+import { postCasFile } from './casClient.js';
 import {
   addPromptIds,
   getOptionData,
   getPromptId,
 } from './extractDirectiveMetadata.js';
 import { getYAML, parseMarkdown } from './parseMarkdown.js';
+import { publishMarkdownFile } from './publish.js';
 import { PostVersionRequestBody } from './types/api.js';
 import {
   DbBlockCourseChild,
   DbBlockImage,
   DbBlockLessonChild,
+  DbBlockLessonLink,
   DbBlockLinkChild,
   DbBlockPara,
   DbBlockResponse,
@@ -130,6 +133,30 @@ const fromParagraph = async (
   }
 };
 
+const fromContainerDirective = async (
+  ctx: Ctx,
+  node: ContainerDirective,
+): Promise<DbBlockLessonLink[]> => {
+  if (node.name === 'chapterlink') {
+    let lessonId = null;
+    if (node.attributes && node.attributes['path']) {
+      const chapterPath = path.join(
+        path.dirname(ctx.filepath),
+        node.attributes['path'],
+      );
+      lessonId = await publishMarkdownFile(chapterPath);
+    }
+    return [
+      {
+        type: 'lessonlink',
+        children: (await fromNodes(ctx, node.children)) as DbBlockLinkChild[],
+        ...(lessonId ? { lessonId: lessonId } : {}),
+      },
+    ];
+  } else {
+    return [];
+  }
+};
 const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
   switch (node.type) {
     // Block elements
@@ -206,22 +233,7 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
       return [{ text: node.value.replaceAll(/[\r\n]/g, ' ') }];
 
     case 'containerDirective':
-      if (node.name === 'chapterlink') {
-        return [
-          {
-            type: 'lessonlink',
-            children: (await fromNodes(
-              ctx,
-              node.children,
-            )) as DbBlockLinkChild[],
-            ...(node.attributes && node.attributes['id']
-              ? { lessonId: node.attributes['id'] }
-              : {}),
-          },
-        ];
-      } else {
-        return [];
-      }
+      return fromContainerDirective(ctx, node);
 
     // Unsupported, but we can extract child content:
     case 'blockquote':
