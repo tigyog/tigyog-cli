@@ -7,11 +7,11 @@ For an example course being written with the TigYog CLI, see [_Eigenwhat?_](http
 
 Requires Node.js 16.11 or newer.
 
-```sh
+```shell-session
 $ npm install -g tigyog-cli
-$ tigyog login y54wyu464432   # Content of TY_SESSION cookie from your browser
-$ tigyog fmt my_course        # Put your course content in directory my_course
-$ tigyog publish my_course    # Push course content to TigYog.app and publish it
+$ tigyog login my_session_token   # Get this from https://tigyog.app/account
+$ tigyog fmt my_course            # Put your course content in directory my_course
+$ tigyog publish my_course        # Push course content to TigYog.app and publish it
 ```
 
 ## Planned features
@@ -22,8 +22,8 @@ If you need any of these, or have any other problems,
 * All TigYog block types.
   Currently only supports Markdown blocks.
 
-* Proper API keys for TigYog.
-  Currently uses session tokens taken from the browser.
+* API keys.
+  Currently authenticates using session tokens taken from the browser.
   These expire after around 6 months.
 
 * Publishing with GitHub actions.

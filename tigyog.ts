@@ -21,7 +21,7 @@ program
   .description('Log with your TigYog account, to allow publishing')
   .argument(
     '<sessiontoken>',
-    'get this from the TY_SESSION cookie in your browser',
+    'get this from https://tigyog.app/account',
   )
   .action((sessionToken) => {
     setSession(sessionToken);
