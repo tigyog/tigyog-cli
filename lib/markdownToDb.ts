@@ -47,6 +47,14 @@ const italicize = <T extends DbNode>(n: T): T => {
   }
 };
 
+const trimEndMut = (inlines: DbInline[]): DbInline[] => {
+  const lastEl = inlines[inlines.length - 1];
+  if (lastEl !== undefined && 'text' in lastEl) {
+    lastEl.text = lastEl.text.trimEnd();
+  }
+  return inlines;
+};
+
 const listItemToOption = async (
   ctx: Ctx,
   promptId: string,
@@ -72,11 +80,20 @@ const listItemToOption = async (
 
   const rest = listItem.children.slice(1);
 
+  const buttonContent = (await fromNodes(
+    ctx,
+    firstBlock.children,
+  )) as DbInline[];
+
+  // TigYog shows all whitespace.
+  // Presence of :b directives often introduces trailing whitespace, so strip it.
+  trimEndMut(buttonContent);
+
   return [
     {
       type: 'option',
       id: optionData.id,
-      children: (await fromNodes(ctx, firstBlock.children)) as DbInline[],
+      children: buttonContent,
       ...(optionData.correct === null ? {} : { correct: optionData.correct }),
     },
     rest.length > 0
