@@ -1,5 +1,5 @@
 import * as fs from 'fs/promises';
-import { Content, List, ListItem, Paragraph } from 'mdast';
+import { Root, Content, List, ListItem, Paragraph } from 'mdast';
 import { ContainerDirective } from 'mdast-util-directive';
 import * as path from 'path';
 import { basename } from 'path';
@@ -15,9 +15,11 @@ import { publishMarkdownFile } from './publish.js';
 import { PostVersionRequestBody } from './types/api.js';
 import {
   DbBlockCourseChild,
+  DbBlockCourseRoot,
   DbBlockImage,
   DbBlockLessonChild,
   DbBlockLessonLink,
+  DbBlockLessonRoot,
   DbBlockLinkChild,
   DbBlockPara,
   DbBlockResponse,
@@ -262,6 +264,38 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
 const fromNodes = (ctx: Ctx, nodes: Content[]): Promise<DbNode[]> =>
   Promise.all(nodes.map((n) => fromNode(ctx, n))).then((x) => x.flat(1));
 
+const courseFromRoot = async (
+  ctx: Ctx,
+  root: Root,
+  yaml: { [prop: string]: unknown },
+): Promise<DbBlockCourseRoot> => {
+  return {
+    type: 'course',
+    children: (await fromNodes(ctx, root.children)) as DbBlockCourseChild[], // FIXME
+    texMacros: (yaml['texMacros'] as string) ?? '',
+    priceUsdDollars: (yaml['priceUsdDollars'] as number) ?? 49,
+    ...(yaml['slug'] ? { slug: yaml['slug'] as string } : {}),
+  };
+};
+
+const lessonFromRoot = async (
+  ctx: Ctx,
+  root: Root,
+  yaml: { [prop: string]: unknown },
+): Promise<DbBlockLessonRoot> => {
+  if (courseId === undefined) throw new Error('Expected courseId to be set');
+  return {
+    type: 'root',
+    children: (await fromNodes(ctx, root.children)) as DbBlockLessonChild[], // FIXME
+    courseId: courseId,
+    texMacros: (yaml['texMacros'] as string) ?? '',
+    slug: basename(ctx.filepath).split('.')[0]!,
+  };
+};
+
+// Hack alert: global variable set when encountering course file, so that chapters can reference it.
+let courseId: string | undefined = undefined;
+
 export const fromMarkdownFile = async (
   filepath: string,
 ): Promise<PostVersionRequestBody> => {
@@ -275,36 +309,23 @@ export const fromMarkdownFile = async (
   const yaml = getYAML(root);
 
   const docId = yaml['id'];
-
   if (typeof docId !== 'string') {
     throw new Error(`Expected id in file ${filepath}`);
   }
 
   const ctx: Ctx = { filepath };
 
-  return {
-    docId: docId,
-    draftContent:
-      yaml['type'] === 'course'
-        ? {
-            type: 'course',
-            children: (await fromNodes(
-              ctx,
-              root.children,
-            )) as DbBlockCourseChild[], // FIXME
-            texMacros: (yaml['texMacros'] as string) ?? '',
-            priceUsdDollars: (yaml['priceUsdDollars'] as number) ?? 49,
-            ...(yaml['slug'] ? { slug: yaml['slug'] as string } : {}),
-          }
-        : {
-            type: 'root',
-            children: (await fromNodes(
-              ctx,
-              root.children,
-            )) as DbBlockLessonChild[], // FIXME
-            courseId: (yaml['courseId'] as string) ?? '', // TODO take from course page
-            texMacros: (yaml['texMacros'] as string) ?? '',
-            slug: basename(filepath).split('.')[0]!,
-          },
-  };
+  if (yaml['type'] === 'course') {
+    courseId = docId;
+
+    return {
+      docId: docId,
+      draftContent: await courseFromRoot(ctx, root, yaml),
+    };
+  } else {
+    return {
+      docId: docId,
+      draftContent: await lessonFromRoot(ctx, root, yaml),
+    };
+  }
 };
