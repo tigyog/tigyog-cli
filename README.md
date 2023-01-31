@@ -37,7 +37,14 @@ If you need any of these, or have any other problems,
 [email Jim](mailto:jameshfisher@gmail.com) or file a GitHub issue.
 
 * All TigYog block types.
-  Currently only supports Markdown blocks.
+  Still to do:
+
+  * Iframes
+  * Images: dark mode strategy
+  * Buy button
+  * Paywall
+  * Responses not immediately following buttons
+  * Callout
 
 * API keys.
   Currently authenticates using session tokens taken from the browser.
