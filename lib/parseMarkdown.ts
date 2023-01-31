@@ -7,13 +7,21 @@ import { unified } from 'unified';
 import * as ymlLib from 'yaml';
 
 export const getYAML = (rootNode: Root): { [prop: string]: unknown } => {
-  for (const [i, c] of rootNode.children.entries()) {
+  for (const c of rootNode.children) {
     if (c.type === 'yaml') {
-      rootNode.children.splice(i, 1);
       return ymlLib.parse(c.value);
     }
   }
   return {};
+};
+
+export const setYAML = (rootNode: Root, yaml: any): void => {
+  for (const c of rootNode.children) {
+    if (c.type === 'yaml') {
+      c.value = ymlLib.stringify(yaml).trimEnd();
+      return;
+    }
+  }
 };
 
 export const parseMarkdown = (md: string): Root => {

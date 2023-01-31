@@ -17,3 +17,7 @@ function makeRandomId() {
 
 export const makePromptId = makeRandomId;
 export const makeOptionId = makeRandomId;
+export const makeCourseId = () =>
+  'C-' + customAlphabet(SAFE_ID_REST_ALPHABET)(10);
+export const makeChapterId = () =>
+  'L-' + customAlphabet(SAFE_ID_REST_ALPHABET)(10);

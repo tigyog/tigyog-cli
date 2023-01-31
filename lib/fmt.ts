@@ -4,8 +4,13 @@ import { ContainerDirective, TextDirective } from 'mdast-util-directive';
 import * as mime from 'mime-types';
 
 import { addPromptIds } from './extractDirectiveMetadata.js';
-import { makeOptionId, makePromptId } from './identifiers.js';
-import { parseMarkdown } from './parseMarkdown.js';
+import {
+  makeChapterId,
+  makeCourseId,
+  makeOptionId,
+  makePromptId,
+} from './identifiers.js';
+import { getYAML, parseMarkdown, setYAML } from './parseMarkdown.js';
 import { stringifyMarkdownRoot } from './stringifyMarkdown.js';
 import { tree } from './tree.js';
 import { visitLists } from './visitors.js';
@@ -81,6 +86,13 @@ const fmtMarkdownFile = async (filepath: string) => {
   });
   const root = parseMarkdown(inStr);
   addPromptIds(root);
+
+  const yaml = getYAML(root);
+  const docId = yaml['id'];
+  if (docId === undefined) {
+    yaml['id'] = yaml['type'] === 'course' ? makeCourseId() : makeChapterId();
+    setYAML(root, yaml);
+  }
 
   visitLists(root, (list, i, parent) => {
     const promptDirective = getPromptDirective(i, parent);
