@@ -23,6 +23,14 @@ If you're using GitHub, you can use [GitHub Actions](https://docs.github.com/en/
 2. Name the secret `TY_SESSION` and copy the value from [your TigYog account page](https://tigyog.app/account).
 3. Add [a workflow file like this](https://github.com/tigyog/eigenwhat/blob/main/.github/workflows/publish.yml) to your repository.
 
+## Configuration
+
+This tool uses [conf](https://github.com/sindresorhus/conf) to store its config, including your session token.
+You can find this config at:
+
+* MacOS: `~/Library/Preferences/tigyog-nodejs/config.json`
+* Windows: `C:\Users\USERNAME\AppData\Roaming\tigyog-nodejs\Config\config.json`
+
 ## Planned features
 
 If you need any of these, or have any other problems,

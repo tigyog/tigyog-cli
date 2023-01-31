@@ -7,12 +7,23 @@ import {
   PostVersionRequestBody,
   PostVersionResponseBody,
   UploadFileResponseBody,
+  WhoAmIResponseBody,
 } from './types/api.js';
-import { urlToApiDocPublished, urlToApiVersions, urlToFiles } from './urls.js';
+import {
+  urlToApiAccountWhoAmI,
+  urlToApiDocPublished,
+  urlToApiVersions,
+  urlToFiles,
+} from './urls.js';
 
 const requireSession = (): string => {
   const session = getSession();
-  if (session === undefined) throw new Error('Must be logged in');
+  if (session === undefined)
+    throw new Error('Must be logged in. Please use `tigyog login` first.');
+  if (session === '')
+    throw new Error(
+      'Your session token is the empty string. This is invalid. Please use `tigyog login`.',
+    );
   return session;
 };
 
@@ -54,6 +65,20 @@ export const apiPutDocPublishedVersionNumber = async (
     body: newPageData,
   });
   return result.ok;
+};
+
+export const apiWhoAmI = async (): Promise<WhoAmIResponseBody> => {
+  const resp = await fetch(urlToApiAccountWhoAmI, {
+    headers: {
+      cookie: `TY_SESSION=${requireSession()}`,
+    },
+  });
+  if (resp.ok) {
+    const data = (await resp.json()) as WhoAmIResponseBody;
+    return data;
+  } else {
+    return Promise.reject(await resp.json());
+  }
 };
 
 export const apiPostFile = async (

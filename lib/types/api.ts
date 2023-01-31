@@ -2,6 +2,11 @@ import { DbBlockRoot } from './db.js';
 
 export type ErrorsResponseBody = { errors: string[] };
 
+export type WhoAmIResponseBody = {
+  accountId: string;
+  ownerEmail: string | null;
+};
+
 export type UploadFileResponseBody = {
   key: string;
 };

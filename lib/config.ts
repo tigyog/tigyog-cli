@@ -6,6 +6,7 @@ const KEY_SESSION = 'session';
 
 export const getSession = () => config.get(KEY_SESSION) as string | undefined;
 export const setSession = (session: string) => config.set(KEY_SESSION, session);
+export const deleteSession = () => config.delete(KEY_SESSION);
 
 // For development purposes
 export const TY_ORIGIN =
