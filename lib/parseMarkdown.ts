@@ -7,20 +7,20 @@ import { unified } from 'unified';
 import * as ymlLib from 'yaml';
 
 export const getYAML = (rootNode: Root): { [prop: string]: unknown } => {
-  for (const c of rootNode.children) {
-    if (c.type === 'yaml') {
-      return ymlLib.parse(c.value);
-    }
+  const c = rootNode.children[0];
+  if (c && c.type === 'yaml') {
+    return ymlLib.parse(c.value);
   }
   return {};
 };
 
 export const setYAML = (rootNode: Root, yaml: any): void => {
-  for (const c of rootNode.children) {
-    if (c.type === 'yaml') {
-      c.value = ymlLib.stringify(yaml).trimEnd();
-      return;
-    }
+  const newVal = ymlLib.stringify(yaml).trimEnd();
+  const c = rootNode.children[0];
+  if (c && c.type === 'yaml') {
+    c.value = newVal;
+  } else {
+    rootNode.children.unshift({ type: 'yaml', value: newVal });
   }
 };
 
