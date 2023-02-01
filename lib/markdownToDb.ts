@@ -16,6 +16,7 @@ import { PostVersionRequestBody } from './types/api.js';
 import {
   DbBlockCourseChild,
   DbBlockCourseRoot,
+  DbBlockIframe,
   DbBlockImage,
   DbBlockLessonChild,
   DbBlockLessonLink,
@@ -155,7 +156,7 @@ const fromParagraph = async (
 const fromContainerDirective = async (
   ctx: Ctx,
   node: ContainerDirective,
-): Promise<DbBlockLessonLink[]> => {
+): Promise<(DbBlockLessonLink | DbBlockIframe)[]> => {
   if (node.name === 'chapterlink') {
     let lessonId = null;
     if (node.attributes && node.attributes['path']) {
@@ -172,6 +173,18 @@ const fromContainerDirective = async (
         ...(lessonId ? { lessonId: lessonId } : {}),
       },
     ];
+  } else if (node.name === 'iframe') {
+    const url = node.attributes?.['url'];
+    if (url) {
+      let initData = '';
+      const c = node.children[0];
+      if (c && c.type === 'code') {
+        initData = c.value;
+      }
+      return [{ type: 'iframe', url, children: [{ text: initData }] }];
+    } else {
+      return [];
+    }
   } else {
     return [];
   }
@@ -316,11 +329,15 @@ let courseId: string | undefined = undefined;
 export const fromMarkdownFile = async (
   filepath: string,
 ): Promise<PostVersionRequestBody> => {
-  const mdFileStr = await fs.readFile(filepath, {
+  const fileContent = await fs.readFile(filepath, {
     encoding: 'utf8',
   });
 
-  const root = parseMarkdown(mdFileStr);
+  // TigYog server demands unix newlines
+  // This can be important in e.g. multi-line code blocks
+  const unixContent = fileContent.replaceAll(/\r\n/g, '\n');
+
+  const root = parseMarkdown(unixContent);
   addPromptIds(root);
 
   const yaml = getYAML(root);

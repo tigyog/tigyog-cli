@@ -39,7 +39,6 @@ If you need any of these, or have any other problems,
 * All TigYog block types.
   Still to do:
 
-  * Iframes
   * Images: dark mode strategy
   * Buy button
   * Paywall
