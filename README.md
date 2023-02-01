@@ -5,13 +5,13 @@ For an example course being written with the TigYog CLI, see [_Eigenwhat?_](http
 
 ## Installation and usage
 
-Requires Node.js 16.11 or newer.
-
 ```shell-session
-$ npm install -g tigyog-cli
-$ tigyog login my_session_token   # Get this from https://tigyog.app/account
-$ tigyog fmt my_course            # Put your course content in directory my_course
-$ tigyog publish my_course        # Push course content to TigYog.app and publish it
+$ npm install -g tigyog-cli  # Requires Node.js 16.11+
+$ tigyog login my_session_token  # Get this from https://tigyog.app/account
+$ mkdir my_course; cd my_course  # Create new directory for your course
+$ tigyog init  # Initialize with starter course content
+$ tigyog fmt .  # Formats your course, e.g. adding identifiers
+$ tigyog publish .  # Push your course to TigYog.app and publish it
 ```
 
 ## Publishing from git

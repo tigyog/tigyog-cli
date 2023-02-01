@@ -4,6 +4,7 @@ import { exit } from 'process';
 import { apiWhoAmI } from './lib/apiClient.js';
 import { deleteSession, getSession, setSession } from './lib/config.js';
 import { fmtCommand } from './lib/fmt.js';
+import { initCommand } from './lib/initCommand.js';
 import { publishCommand } from './lib/publish.js';
 
 const showWhoAmI = async () => {
@@ -28,11 +29,18 @@ const program = new Command();
 program.name('tigyog').description('Official CLI for https://tigyog.app');
 
 program
+  .command('init')
+  .description('Create a blank new course')
+  .action(async () => {
+    await initCommand();
+  });
+
+program
   .command('fmt')
   .description('Prepare files for publishing, e.g. add IDs to buttons')
   .argument('<coursedir>', 'path to directory containing all course content')
-  .action((courseDir) => {
-    fmtCommand(courseDir);
+  .action(async (courseDir) => {
+    await fmtCommand(courseDir);
   });
 
 program
@@ -84,8 +92,8 @@ program
   .command('publish')
   .description('Publish course from local files')
   .argument('<coursedir>', 'path to directory containing all course content')
-  .action((courseDir) => {
-    publishCommand(courseDir);
+  .action(async (courseDir) => {
+    await publishCommand(courseDir);
   });
 
 program.parse();
