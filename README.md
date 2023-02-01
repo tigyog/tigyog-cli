@@ -10,8 +10,8 @@ $ npm install -g tigyog-cli  # Requires Node.js 16.11+
 $ tigyog login my_session_token  # Get this from https://tigyog.app/account
 $ mkdir my_course; cd my_course  # Create new directory for your course
 $ tigyog init  # Initialize with starter course content
-$ tigyog fmt .  # Formats your course, e.g. adding identifiers
-$ tigyog publish .  # Push your course to TigYog.app and publish it
+$ tigyog fmt  # Format your course, e.g. add identifiers
+$ tigyog publish  # Push your course to TigYog.app and publish it
 ```
 
 ## Publishing from git

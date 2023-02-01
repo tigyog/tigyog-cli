@@ -38,9 +38,12 @@ program
 program
   .command('fmt')
   .description('Prepare files for publishing, e.g. add IDs to buttons')
-  .argument('<coursedir>', 'path to directory containing all course content')
+  .argument(
+    '[coursedir]',
+    'path to course directory (default: current directory)',
+  )
   .action(async (courseDir) => {
-    await fmtCommand(courseDir);
+    await fmtCommand(courseDir ?? '.');
   });
 
 program
@@ -91,9 +94,12 @@ program
 program
   .command('publish')
   .description('Publish course from local files')
-  .argument('<coursedir>', 'path to directory containing all course content')
+  .argument(
+    '[coursedir]',
+    'path to course directory (default: current directory)',
+  )
   .action(async (courseDir) => {
-    await publishCommand(courseDir);
+    await publishCommand(courseDir ?? '.');
   });
 
 program.parse();
