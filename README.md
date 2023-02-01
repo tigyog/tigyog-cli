@@ -40,8 +40,6 @@ If you need any of these, or have any other problems,
   Still to do:
 
   * Images: dark mode strategy
-  * Buy button
-  * Paywall
   * Responses not immediately following buttons
   * Callout
 

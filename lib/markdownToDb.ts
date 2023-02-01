@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
-import { Root, Content, List, ListItem, Paragraph } from 'mdast';
-import { ContainerDirective } from 'mdast-util-directive';
+import { Content, List, ListItem, Paragraph, Root } from 'mdast';
+import { ContainerDirective, LeafDirective } from 'mdast-util-directive';
 import * as path from 'path';
 import { basename } from 'path';
 
@@ -14,6 +14,7 @@ import { getYAML, parseMarkdown } from './parseMarkdown.js';
 import { publishMarkdownFile } from './publish.js';
 import { PostVersionRequestBody } from './types/api.js';
 import {
+  DbBlockBuy,
   DbBlockCourseChild,
   DbBlockCourseRoot,
   DbBlockIframe,
@@ -23,6 +24,7 @@ import {
   DbBlockLessonRoot,
   DbBlockLinkChild,
   DbBlockPara,
+  DbBlockPaywall,
   DbBlockResponse,
   DbInline,
   DbInlineOption,
@@ -189,6 +191,30 @@ const fromContainerDirective = async (
     return [];
   }
 };
+
+const fromLeafDirective = async (
+  ctx: Ctx,
+  node: LeafDirective,
+): Promise<(DbBlockBuy | DbBlockPaywall)[]> => {
+  if (node.name === 'buy') {
+    return [
+      {
+        type: 'buy',
+        children: (await fromNodes(ctx, node.children)) as DbInline[],
+      },
+    ];
+  } else if (node.name === 'paywall') {
+    return [
+      {
+        type: 'paywall',
+        children: [{ text: '' }],
+      },
+    ];
+  } else {
+    return [];
+  }
+};
+
 const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
   switch (node.type) {
     // Block elements
@@ -267,6 +293,9 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
     case 'containerDirective':
       return fromContainerDirective(ctx, node);
 
+    case 'leafDirective':
+      return fromLeafDirective(ctx, node);
+
     // Unsupported, but we can extract child content:
     case 'blockquote':
     case 'delete':
@@ -286,7 +315,6 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
     case 'imageReference':
     case 'thematicBreak':
     case 'textDirective': // Used for ids on list/listItem; then discarded
-    case 'leafDirective':
       return [];
   }
 };
