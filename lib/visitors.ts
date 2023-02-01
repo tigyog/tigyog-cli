@@ -1,5 +1,25 @@
-import { Blockquote, FootnoteDefinition, List, ListItem, Root } from 'mdast';
-import { ContainerDirective } from 'mdast-util-directive';
+import {
+  Blockquote,
+  Delete,
+  Emphasis,
+  Footnote,
+  FootnoteDefinition,
+  Heading,
+  Link,
+  LinkReference,
+  List,
+  ListItem,
+  Paragraph,
+  Root,
+  Strong,
+  TableCell,
+  Text,
+} from 'mdast';
+import {
+  ContainerDirective,
+  LeafDirective,
+  TextDirective,
+} from 'mdast-util-directive';
 import { visit } from 'unist-util-visit';
 
 /*
@@ -23,7 +43,31 @@ export const visitLists = (
       | FootnoteDefinition
       | ListItem
       | null,
-  ) => number | undefined,
+  ) => number | void,
 ): void => {
   visit(root, 'list', visitor);
+};
+
+export const visitTexts = (
+  root: Root,
+  visitor: (
+    text: Text,
+    i: number | null,
+    parent:
+      | Root
+      | Paragraph
+      | Heading
+      | LeafDirective
+      | TableCell
+      | Link
+      | LinkReference
+      | Emphasis
+      | Strong
+      | Delete
+      | Footnote
+      | TextDirective
+      | null,
+  ) => number | void,
+): void => {
+  visit(root, 'text', visitor);
 };

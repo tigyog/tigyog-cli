@@ -31,6 +31,7 @@ import {
   DbNode,
   DbNonRootBlock,
 } from './types/db.js';
+import { visitTexts } from './visitors.js';
 
 type Ctx = { filepath: string };
 
@@ -354,6 +355,13 @@ const lessonFromRoot = async (
 // Hack alert: global variable set when encountering course file, so that chapters can reference it.
 let courseId: string | undefined = undefined;
 
+// TODO single quotes, dashes
+const smartQuotes = (text: string): string => {
+  text = text.replace(/"(?=\w|$)/g, '“');
+  text = text.replace(/(?<=\w|^)"/g, '”');
+  return text;
+};
+
 export const fromMarkdownFile = async (
   filepath: string,
 ): Promise<PostVersionRequestBody> => {
@@ -367,6 +375,10 @@ export const fromMarkdownFile = async (
 
   const root = parseMarkdown(unixContent);
   addPromptIds(root);
+
+  visitTexts(root, (text) => {
+    text.value = smartQuotes(text.value);
+  });
 
   const yaml = getYAML(root);
 
