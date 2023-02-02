@@ -17,11 +17,16 @@ $ tigyog publish  # Push your course to TigYog.app and publish it
 ## Publishing from git
 
 You might want to publish your course every time you push to a git repository.
-If you're using GitHub, you can use [GitHub Actions](https://docs.github.com/en/actions/quickstart) for this:
+If you're using GitHub, you can use [GitHub Actions](https://docs.github.com/en/actions/quickstart) for this.
 
-1. On your GitHub repository, [add a secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
-2. Name the secret `TY_SESSION` and copy the value from [your TigYog account page](https://tigyog.app/account).
-3. Add [a workflow file like this](https://github.com/tigyog/eigenwhat/blob/main/.github/workflows/publish.yml) to your repository.
+On your GitHub repository, go to [Settings > Secrets and variables > Actions](https://docs.github.com/en/actions/security-guides/encrypted-secrets), and click "New repository secret".
+Name the secret `TY_SESSION` and copy the value from [your TigYog account page](https://tigyog.app/account).
+Once configured, it should look like this:
+
+![GitHub Actions secret](github_actions_secret.png)
+
+Then add [a workflow file like this](https://github.com/tigyog/eigenwhat/blob/main/.github/workflows/publish.yml) to your repository.
+When you next push to your `main` branch, it should automatically publish the latest version to TigYog.
 
 ## Configuration
 
