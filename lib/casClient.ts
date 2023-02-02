@@ -29,3 +29,15 @@ export const postCasFile = async (filePath: string): Promise<string> => {
   filepathToKey[filePath] = key;
   return key;
 };
+
+export const postCasFiles = async (
+  filePaths: string[],
+): Promise<{ [filePath: string]: string }> => {
+  const x = await Promise.all(
+    filePaths.map(async (fp) => {
+      const k = await postCasFile(fp);
+      return [fp, k] as [string, string];
+    }),
+  );
+  return Object.fromEntries(x);
+};

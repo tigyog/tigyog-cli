@@ -4,14 +4,12 @@ import { ContainerDirective, LeafDirective } from 'mdast-util-directive';
 import * as path from 'path';
 import { basename } from 'path';
 
-import { postCasFile } from './casClient.js';
 import {
   addPromptIds,
   getOptionData,
   getPromptId,
 } from './extractDirectiveMetadata.js';
 import { getYAML, parseMarkdown } from './parseMarkdown.js';
-import { publishMarkdownFile } from './publish.js';
 import { PostVersionRequestBody } from './types/api.js';
 import {
   DbBlockBuy,
@@ -33,7 +31,12 @@ import {
 } from './types/db.js';
 import { visitTexts } from './visitors.js';
 
-type Ctx = { filepath: string };
+export type Ctx = {
+  currentFilePath: string;
+  courseId: string;
+  imagePathsToKeys: { [filePath: string]: string };
+  lessonPathsToIds: { [filePath: string]: string };
+};
 
 const bolden = <T extends DbNode>(n: T): T => {
   if ('type' in n) {
@@ -59,11 +62,11 @@ const trimEndMut = (inlines: DbInline[]): DbInline[] => {
   return inlines;
 };
 
-const listItemToOption = async (
+const listItemToOption = (
   ctx: Ctx,
   promptId: string,
   listItem: ListItem,
-): Promise<[DbInlineOption, DbBlockResponse[]]> => {
+): [DbInlineOption, DbBlockResponse[]] => {
   const firstBlock = listItem.children[0];
 
   if (firstBlock === undefined) {
@@ -84,10 +87,7 @@ const listItemToOption = async (
 
   const rest = listItem.children.slice(1);
 
-  const buttonContent = (await fromNodes(
-    ctx,
-    firstBlock.children,
-  )) as DbInline[];
+  const buttonContent = fromNodes(ctx, firstBlock.children) as DbInline[];
 
   // TigYog shows all whitespace.
   // Presence of :b directives often introduces trailing whitespace, so strip it.
@@ -106,36 +106,38 @@ const listItemToOption = async (
             type: 'response',
             toPromptId: promptId,
             optionIds: [optionData.id],
-            children: (await fromNodes(ctx, rest)) as DbNonRootBlock[],
+            children: fromNodes(ctx, rest) as DbNonRootBlock[],
           },
         ]
       : [],
   ];
 };
 
-const fromList = async (ctx: Ctx, node: List): Promise<DbNonRootBlock[]> => {
+const fromList = (ctx: Ctx, node: List): DbNonRootBlock[] => {
   const promptId = getPromptId(node);
   if (promptId) {
-    const out = await Promise.all(
-      node.children.map((li) => listItemToOption(ctx, promptId, li)),
-    );
+    const out = node.children.map((li) => listItemToOption(ctx, promptId, li));
     return [
       { type: 'prompt', id: promptId, children: out.map((o) => o[0]) },
       ...out.flatMap((o) => o[1]),
     ];
   } else {
-    return (await fromNodes(ctx, node.children)) as DbNonRootBlock[];
+    return fromNodes(ctx, node.children) as DbNonRootBlock[];
   }
 };
 
-const fromParagraph = async (
+const fromParagraph = (
   ctx: Ctx,
   node: Paragraph,
-): Promise<(DbBlockPara | DbBlockImage)[]> => {
+): (DbBlockPara | DbBlockImage)[] => {
   const firstChild = node.children[0];
   if (firstChild && firstChild.type === 'image') {
-    const imgPath = path.join(path.dirname(ctx.filepath), firstChild.url);
-    const key = await postCasFile(imgPath);
+    const imgPath = path.join(
+      path.dirname(ctx.currentFilePath),
+      firstChild.url,
+    );
+    const key = ctx.imagePathsToKeys[imgPath];
+    if (!key) throw new Error('Expected image at path: ' + imgPath);
 
     // Markdown images (like HTML) are considered inline,
     // but TigYog images are blocks.
@@ -150,29 +152,32 @@ const fromParagraph = async (
     return [
       {
         type: 'p',
-        children: (await fromNodes(ctx, node.children)) as DbInline[],
+        children: fromNodes(ctx, node.children) as DbInline[],
       },
     ];
   }
 };
 
-const fromContainerDirective = async (
+const fromContainerDirective = (
   ctx: Ctx,
   node: ContainerDirective,
-): Promise<(DbBlockLessonLink | DbBlockIframe)[]> => {
+): (DbBlockLessonLink | DbBlockIframe)[] => {
   if (node.name === 'chapterlink') {
-    let lessonId = null;
+    let lessonId: string | null = null;
     if (node.attributes && node.attributes['path']) {
       const chapterPath = path.join(
-        path.dirname(ctx.filepath),
+        path.dirname(ctx.currentFilePath),
         node.attributes['path'],
       );
-      lessonId = await publishMarkdownFile(chapterPath);
+      const referencedLessonId = ctx.lessonPathsToIds[chapterPath];
+      if (!referencedLessonId)
+        throw new Error('Expected chapter at path: ' + chapterPath);
+      lessonId = referencedLessonId;
     }
     return [
       {
         type: 'lessonlink',
-        children: (await fromNodes(ctx, node.children)) as DbBlockLinkChild[],
+        children: fromNodes(ctx, node.children) as DbBlockLinkChild[],
         ...(lessonId ? { lessonId: lessonId } : {}),
       },
     ];
@@ -193,15 +198,15 @@ const fromContainerDirective = async (
   }
 };
 
-const fromLeafDirective = async (
+const fromLeafDirective = (
   ctx: Ctx,
   node: LeafDirective,
-): Promise<(DbBlockBuy | DbBlockPaywall)[]> => {
+): (DbBlockBuy | DbBlockPaywall)[] => {
   if (node.name === 'buy') {
     return [
       {
         type: 'buy',
-        children: (await fromNodes(ctx, node.children)) as DbInline[],
+        children: fromNodes(ctx, node.children) as DbInline[],
       },
     ];
   } else if (node.name === 'paywall') {
@@ -216,7 +221,7 @@ const fromLeafDirective = async (
   }
 };
 
-const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
+const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
   switch (node.type) {
     // Block elements
     case 'code':
@@ -232,14 +237,14 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
         return [
           {
             type: 'h1',
-            children: (await fromNodes(ctx, node.children)) as DbInline[],
+            children: fromNodes(ctx, node.children) as DbInline[],
           },
         ];
       } else {
         return [
           {
             type: 'h2',
-            children: (await fromNodes(ctx, node.children)) as DbInline[],
+            children: fromNodes(ctx, node.children) as DbInline[],
           },
         ];
       }
@@ -249,21 +254,19 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
     case 'list':
       return fromList(ctx, node);
     case 'listItem':
-      return Promise.all(
-        node.children.map(async (bl): Promise<DbNode[]> => {
-          if (bl.type === 'paragraph') {
-            return [
-              {
-                type: 'p',
-                listStyleType: 'disc',
-                children: (await fromNodes(ctx, bl.children)) as DbInline[],
-              },
-            ];
-          } else {
-            return (await fromNode(ctx, bl)) as DbNode[];
-          }
-        }),
-      ).then((x) => x.flat(1));
+      return node.children.flatMap((bl): DbNode[] => {
+        if (bl.type === 'paragraph') {
+          return [
+            {
+              type: 'p',
+              listStyleType: 'disc',
+              children: fromNodes(ctx, bl.children) as DbInline[],
+            },
+          ];
+        } else {
+          return fromNode(ctx, bl) as DbNode[];
+        }
+      });
     case 'math':
       return [{ type: 'blockmath', children: [{ text: node.value }] }];
     case 'paragraph':
@@ -273,7 +276,7 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
     case 'break':
       return [{ type: 'br', children: [{ text: '' }] }];
     case 'emphasis':
-      return (await fromNodes(ctx, node.children)).map(italicize);
+      return fromNodes(ctx, node.children).map(italicize);
     case 'inlineCode':
       return [{ type: 'inlinecode', children: [{ text: node.value }] }];
     case 'inlineMath':
@@ -283,11 +286,11 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
         {
           type: 'link',
           href: node.url,
-          children: (await fromNodes(ctx, node.children)) as DbInline[],
+          children: fromNodes(ctx, node.children) as DbInline[],
         },
       ];
     case 'strong':
-      return (await fromNodes(ctx, node.children)).map(bolden);
+      return fromNodes(ctx, node.children).map(bolden);
     case 'text':
       return [{ text: node.value.replaceAll(/[\r\n]/g, ' ') }];
 
@@ -320,17 +323,17 @@ const fromNode = async (ctx: Ctx, node: Content): Promise<DbNode[]> => {
   }
 };
 
-const fromNodes = (ctx: Ctx, nodes: Content[]): Promise<DbNode[]> =>
-  Promise.all(nodes.map((n) => fromNode(ctx, n))).then((x) => x.flat(1));
+const fromNodes = (ctx: Ctx, nodes: Content[]): DbNode[] =>
+  nodes.flatMap((n) => fromNode(ctx, n));
 
-const courseFromRoot = async (
+const courseFromRoot = (
   ctx: Ctx,
   root: Root,
   yaml: { [prop: string]: unknown },
-): Promise<DbBlockCourseRoot> => {
+): DbBlockCourseRoot => {
   return {
     type: 'course',
-    children: (await fromNodes(ctx, root.children)) as DbBlockCourseChild[], // FIXME
+    children: fromNodes(ctx, root.children) as DbBlockCourseChild[], // FIXME
     texMacros: (yaml['texMacros'] as string) ?? '',
     ...(yaml['priceUsdDollars']
       ? { priceUsdDollars: yaml['priceUsdDollars'] as number }
@@ -339,18 +342,18 @@ const courseFromRoot = async (
   };
 };
 
-const lessonFromRoot = async (
+const lessonFromRoot = (
   ctx: Ctx,
   root: Root,
   yaml: { [prop: string]: unknown },
-): Promise<DbBlockLessonRoot> => {
+): DbBlockLessonRoot => {
   if (courseId === undefined) throw new Error('Expected courseId to be set');
   return {
     type: 'root',
-    children: (await fromNodes(ctx, root.children)) as DbBlockLessonChild[], // FIXME
+    children: fromNodes(ctx, root.children) as DbBlockLessonChild[], // FIXME
     courseId: courseId,
     texMacros: (yaml['texMacros'] as string) ?? '',
-    slug: basename(ctx.filepath).split('.')[0]!,
+    slug: basename(ctx.currentFilePath).split('.')[0]!,
   };
 };
 
@@ -365,9 +368,9 @@ const smartQuotes = (text: string): string => {
 };
 
 export const fromMarkdownFile = async (
-  filepath: string,
+  ctx: Ctx,
 ): Promise<PostVersionRequestBody> => {
-  const fileContent = await fs.readFile(filepath, {
+  const fileContent = await fs.readFile(ctx.currentFilePath, {
     encoding: 'utf8',
   });
 
@@ -386,22 +389,20 @@ export const fromMarkdownFile = async (
 
   const docId = yaml['id'];
   if (typeof docId !== 'string') {
-    throw new Error(`Expected id in file ${filepath}`);
+    throw new Error(`Expected id in file ${ctx.currentFilePath}`);
   }
-
-  const ctx: Ctx = { filepath };
 
   if (yaml['type'] === 'course') {
     courseId = docId;
 
     return {
       docId: docId,
-      draftContent: await courseFromRoot(ctx, root, yaml),
+      draftContent: courseFromRoot(ctx, root, yaml),
     };
   } else {
     return {
       docId: docId,
-      draftContent: await lessonFromRoot(ctx, root, yaml),
+      draftContent: lessonFromRoot(ctx, root, yaml),
     };
   }
 };
