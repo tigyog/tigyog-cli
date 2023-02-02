@@ -332,7 +332,9 @@ const courseFromRoot = async (
     type: 'course',
     children: (await fromNodes(ctx, root.children)) as DbBlockCourseChild[], // FIXME
     texMacros: (yaml['texMacros'] as string) ?? '',
-    priceUsdDollars: (yaml['priceUsdDollars'] as number) ?? 49,
+    ...(yaml['priceUsdDollars']
+      ? { priceUsdDollars: yaml['priceUsdDollars'] as number }
+      : {}),
     ...(yaml['slug'] ? { slug: yaml['slug'] as string } : {}),
   };
 };
