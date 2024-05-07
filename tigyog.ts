@@ -102,7 +102,7 @@ program
   .option('--dryrun', 'run the publish command without actually publishing')
   .action(async (courseDir, options) => {
     const courseId = options['courseid'];
-    const dryRun = options['dryrun'];
+    const dryRun = !!options['dryrun'];
     await publishCommand({ courseDir: courseDir ?? '.', courseId, dryRun });
   });
 
