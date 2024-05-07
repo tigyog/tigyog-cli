@@ -1,7 +1,6 @@
 import * as fs from 'fs/promises';
 import { Blockquote, FootnoteDefinition, List, ListItem, Root } from 'mdast';
 import { ContainerDirective, TextDirective } from 'mdast-util-directive';
-import * as mime from 'mime-types';
 
 import { addPromptIds } from './extractDirectiveMetadata.js';
 import {
@@ -132,9 +131,7 @@ const fmtMarkdownFile = async (filepath: string) => {
 
 export async function fmtCommand(courseDir: string) {
   for await (const filepath of tree(courseDir)) {
-    const mimeType = mime.lookup(filepath);
-    if (!mimeType) continue;
-    if (mimeType === 'text/markdown' && filepath.endsWith('.tigyog.md')) {
+    if (filepath.endsWith('.tigyog.md')) {
       await fmtMarkdownFile(filepath);
     }
   }

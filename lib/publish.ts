@@ -84,41 +84,41 @@ export async function publishCommand(courseDir: string) {
   const lessonPathsToIds: { [filePath: string]: string } = {};
 
   for await (const filepath of tree(courseDir)) {
-    const mimeType = mime.lookup(filepath);
-    if (mimeType) {
-      if (mimeType === 'text/markdown' && filepath.endsWith('.tigyog.md')) {
-        const docInfo = await getMarkdownDocInfo(filepath);
-        if (docInfo) {
-          if (docInfo.type === 'course') {
-            if (filepath === expectedCourseIndexPath) {
-              courseId = docInfo.id;
-            } else {
-              console.warn(
-                'Ignoring course file at non-standard filepath',
-                filepath,
-                '. To use it, move it to',
-                expectedCourseIndexPath,
-              );
-            }
+    if (filepath.endsWith('.tigyog.md')) {
+      const docInfo = await getMarkdownDocInfo(filepath);
+      if (docInfo) {
+        if (docInfo.type === 'course') {
+          if (filepath === expectedCourseIndexPath) {
+            courseId = docInfo.id;
           } else {
-            if (filepath === expectedCourseIndexPath) {
-              console.warn(
-                'Ignoring lesson file at course filepath',
-                expectedCourseIndexPath,
-                '. If you intended this to be your course homepage, add type:course to it.',
-              );
-            } else {
-              lessonPathsToIds[filepath] = docInfo.id;
-            }
+            console.warn(
+              'Ignoring course file at non-standard filepath',
+              filepath,
+              '. To use it, move it to',
+              expectedCourseIndexPath,
+            );
           }
         } else {
-          console.warn(
-            'Ignoring Markdown file at path',
-            filepath,
-            '. Try running tigyog fmt first.',
-          );
+          if (filepath === expectedCourseIndexPath) {
+            console.warn(
+              'Ignoring lesson file at course filepath',
+              expectedCourseIndexPath,
+              '. If you intended this to be your course homepage, add type:course to it.',
+            );
+          } else {
+            lessonPathsToIds[filepath] = docInfo.id;
+          }
         }
-      } else if (mimeType.startsWith('image/')) {
+      } else {
+        console.warn(
+          'Ignoring Markdown file at path',
+          filepath,
+          '. Try running tigyog fmt first.',
+        );
+      }
+    } else {
+      const mimeType = mime.lookup(filepath);
+      if (mimeType && mimeType.startsWith('image/')) {
         imagePaths.push(filepath);
       }
     }
