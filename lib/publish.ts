@@ -77,7 +77,7 @@ Step 4: post chapter pages. These can be done concurrently.
 */
 
 export async function publishCommand(courseDir: string) {
-  const expectedCourseIndexPath = path.join(courseDir, 'index.md');
+  const expectedCourseIndexPath = path.join(courseDir, 'index.tigyog.md');
 
   let courseId: string | null = null;
   const imagePaths = [];
@@ -86,7 +86,7 @@ export async function publishCommand(courseDir: string) {
   for await (const filepath of tree(courseDir)) {
     const mimeType = mime.lookup(filepath);
     if (mimeType) {
-      if (mimeType === 'text/markdown') {
+      if (mimeType === 'text/markdown' && filepath.endsWith('.tigyog.md')) {
         const docInfo = await getMarkdownDocInfo(filepath);
         if (docInfo) {
           if (docInfo.type === 'course') {

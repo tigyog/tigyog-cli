@@ -134,7 +134,7 @@ export async function fmtCommand(courseDir: string) {
   for await (const filepath of tree(courseDir)) {
     const mimeType = mime.lookup(filepath);
     if (!mimeType) continue;
-    if (mimeType === 'text/markdown') {
+    if (mimeType === 'text/markdown' && filepath.endsWith('.tigyog.md')) {
       await fmtMarkdownFile(filepath);
     }
   }
