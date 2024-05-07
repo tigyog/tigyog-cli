@@ -347,18 +347,14 @@ const lessonFromRoot = (
   root: Root,
   yaml: { [prop: string]: unknown },
 ): DbBlockLessonRoot => {
-  if (courseId === undefined) throw new Error('Expected courseId to be set');
   return {
     type: 'root',
     children: fromNodes(ctx, root.children) as DbBlockLessonChild[], // FIXME
-    courseId: courseId,
+    courseId: ctx.courseId,
     texMacros: (yaml['texMacros'] as string) ?? '',
     slug: basename(ctx.currentFilePath).split('.')[0]!,
   };
 };
-
-// Hack alert: global variable set when encountering course file, so that chapters can reference it.
-let courseId: string | undefined = undefined;
 
 // TODO single quotes, dashes
 const smartQuotes = (text: string): string => {
@@ -393,8 +389,6 @@ export const fromMarkdownFile = async (
   }
 
   if (yaml['type'] === 'course') {
-    courseId = docId;
-
     return {
       docId: docId,
       draftContent: courseFromRoot(ctx, root, yaml),

@@ -16,6 +16,7 @@ const publishMarkdownFile = async (ctx: Ctx): Promise<void> => {
   const docId = reqBody.docId;
   const resp = await apiPostVersion(reqBody);
   if (!resp.ok) {
+    console.error(JSON.stringify(reqBody));
     throw new Error(
       `Could not post ${ctx.currentFilePath}, got errors: ` +
         JSON.stringify(resp.errors),
