@@ -98,8 +98,12 @@ program
     '[coursedir]',
     'path to course directory (default: current directory)',
   )
-  .action(async (courseDir) => {
-    await publishCommand(courseDir ?? '.');
+  .option('-c, --courseid <string>', 'the course ID to publish to')
+  .option('--dryrun', 'run the publish command without actually publishing')
+  .action(async (courseDir, options) => {
+    const courseId = options['courseid'];
+    const dryRun = options['dryrun'];
+    await publishCommand({ courseDir: courseDir ?? '.', courseId, dryRun });
   });
 
 program.parse();

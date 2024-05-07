@@ -76,10 +76,18 @@ Step 3: post course page.
 Step 4: post chapter pages. These can be done concurrently.
 */
 
-export async function publishCommand(courseDir: string) {
+export async function publishCommand({
+  courseDir,
+  courseId,
+  dryRun = true,
+}: {
+  courseDir: string;
+  courseId?: string | undefined;
+  dryRun?: boolean;
+}) {
   const expectedCourseIndexPath = path.join(courseDir, 'index.tigyog.md');
 
-  let courseId: string | null = null;
+  let courseIndexPath: string | undefined;
   const imagePaths = [];
   const lessonPathsToIds: { [filePath: string]: string } = {};
 
@@ -89,6 +97,7 @@ export async function publishCommand(courseDir: string) {
       if (docInfo) {
         if (docInfo.type === 'course') {
           if (filepath === expectedCourseIndexPath) {
+            courseIndexPath = filepath;
             courseId = docInfo.id;
           } else {
             console.warn(
@@ -124,14 +133,26 @@ export async function publishCommand(courseDir: string) {
     }
   }
 
-  if (courseId === null) {
+  if (courseId === undefined) {
     throw new Error(
-      'Did not find course id! Ensure course file is at ' +
+      'Did not find course id! Pass a --course-id, or ensure course file is at ' +
         expectedCourseIndexPath +
         ' and has id. (Try running tigyog fmt)',
     );
   }
   const foundCourseId = courseId;
+
+  if (dryRun) {
+    console.log('Dry run.');
+    console.log('Would have posted files at:', imagePaths);
+    if (courseIndexPath)
+      console.log('Would have posted course file at:', courseIndexPath);
+    console.log(
+      'Would have posted chapter files at:',
+      Object.keys(lessonPathsToIds),
+    );
+    return;
+  }
 
   // Here, we could crawl Markdown files here to restrict to only the subset of images that are actually referenced.
   // But on the assumption that this is a dedicated course directory, images should only be here if they're referenced by something.
@@ -139,12 +160,14 @@ export async function publishCommand(courseDir: string) {
 
   // Publish course file first, to ensure course is created before posting any chapters.
   // It's okay for the course file to reference chapters that have not yet been uploaded.
-  await publishMarkdownFile({
-    currentFilePath: expectedCourseIndexPath,
-    imagePathsToKeys,
-    courseId: foundCourseId,
-    lessonPathsToIds,
-  });
+  if (courseIndexPath) {
+    await publishMarkdownFile({
+      currentFilePath: courseIndexPath,
+      imagePathsToKeys,
+      courseId: foundCourseId,
+      lessonPathsToIds,
+    });
+  }
 
   await Promise.all(
     Object.keys(lessonPathsToIds).map((lessonPath) =>
