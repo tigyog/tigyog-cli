@@ -1,4 +1,5 @@
-import { Root, List, Paragraph } from 'mdast';
+import { List, Paragraph, Root } from 'mdast';
+import { DarkModeStrategies, DarkModeStrategy } from './types/db.js';
 import { visitLists } from './visitors.js';
 
 export const getOptionData = (
@@ -23,6 +24,29 @@ export const getOptionData = (
     }
   }
   return null;
+};
+
+const isDarkModeStrategy = (strategy: string): strategy is DarkModeStrategy => {
+  return DarkModeStrategies.includes(strategy as DarkModeStrategy);
+};
+
+export const getDarkModeStrategy = (p: Paragraph): DarkModeStrategy => {
+  for (const c of p.children) {
+    if (
+      c.type === 'textDirective' &&
+      c.name === 'image' &&
+      c.attributes &&
+      c.attributes['darkMode']
+    ) {
+      const darkModeStrategy = c.attributes['darkMode'];
+      if (isDarkModeStrategy(darkModeStrategy)) {
+        return darkModeStrategy;
+      } else {
+        throw new Error(`Invalid darkMode strategy: ${darkModeStrategy}`);
+      }
+    }
+  }
+  return 'invert'; // FIXME not a safe default ...
 };
 
 export const addPromptIds = (root: Root): void => {

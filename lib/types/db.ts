@@ -67,7 +67,8 @@ export type DbBlockResponse = {
   toPromptId: string;
   optionIds: string[];
 };
-export type DarkModeStrategy = 'light_bg' | 'no_bg' | 'invert';
+export const DarkModeStrategies = ['light_bg', 'no_bg', 'invert'] as const;
+export type DarkModeStrategy = (typeof DarkModeStrategies)[number];
 export type DbBlockImage = {
   type: 'image';
   children: DbInline[];

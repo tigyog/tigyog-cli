@@ -6,6 +6,7 @@ import { basename } from 'path';
 
 import {
   addPromptIds,
+  getDarkModeStrategy,
   getOptionData,
   getPromptId,
 } from './extractDirectiveMetadata.js';
@@ -139,14 +140,14 @@ const fromParagraph = (
     const key = ctx.imagePathsToKeys[imgPath];
     if (!key) throw new Error('Expected image at path: ' + imgPath);
 
-    // Markdown images (like HTML) are considered inline,
+    // Markdown images (like HTML img tags) are considered inline,
     // but TigYog images are blocks.
     return [
       {
         type: 'image',
         key: key,
         children: [{ text: firstChild.alt ?? '' }],
-        darkMode: 'invert', // FIXME this is not a safe default; TODO make this configurable
+        darkMode: getDarkModeStrategy(node),
       },
     ];
   } else {
