@@ -164,7 +164,9 @@ const fromContainerDirective = (
 ): (DbBlockLessonLink | DbBlockIframe)[] => {
   if (node.name === 'chapterlink') {
     let lessonId: string | null = null;
-    if (node.attributes && node.attributes['path']) {
+    if (node.attributes && node.attributes['lessonId']) {
+      lessonId = node.attributes['lessonId'];
+    } else if (node.attributes && node.attributes['path']) {
       const chapterPath = path.join(
         path.dirname(ctx.currentFilePath),
         node.attributes['path'],
