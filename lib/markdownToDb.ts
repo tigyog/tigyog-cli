@@ -146,6 +146,7 @@ const fromParagraph = (
         type: 'image',
         key: key,
         children: [{ text: firstChild.alt ?? '' }],
+        darkMode: 'invert', // FIXME this is not a safe default; TODO make this configurable
       },
     ];
   } else {
