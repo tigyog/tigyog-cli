@@ -171,7 +171,11 @@ const fromContainerDirective = (
       );
       const referencedLessonId = ctx.lessonPathsToIds[chapterPath];
       if (!referencedLessonId)
-        throw new Error('Expected chapter at path: ' + chapterPath);
+        throw new Error(
+          `Expected chapter at path: ${chapterPath} but only have: ${Object.keys(
+            ctx.lessonPathsToIds,
+          ).join(', ')}`,
+        );
       lessonId = referencedLessonId;
     }
     return [
