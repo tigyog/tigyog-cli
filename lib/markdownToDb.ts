@@ -347,6 +347,9 @@ const courseFromRoot = (
       ? { priceUsdDollars: yaml['priceUsdDollars'] as number }
       : {}),
     ...(yaml['slug'] ? { slug: yaml['slug'] as string } : {}),
+    ...(yaml['plaintextTitle']
+      ? { plaintextTitle: yaml['plaintextTitle'] as string }
+      : {}),
   };
 };
 
