@@ -9,7 +9,10 @@ import * as ymlLib from 'yaml';
 export const getYAML = (rootNode: Root): { [prop: string]: unknown } => {
   const c = rootNode.children[0];
   if (c && c.type === 'yaml') {
-    return ymlLib.parse(c.value);
+    const yaml = ymlLib.parse(c.value);
+    if (yaml) {
+      return yaml;
+    }
   }
   return {};
 };
