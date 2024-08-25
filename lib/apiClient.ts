@@ -1,5 +1,4 @@
-import fetch from 'node-fetch';
-import { FormData } from 'node-fetch';
+import fetch, { FormData } from 'node-fetch';
 
 import { getSession } from './config.js';
 import {
@@ -13,6 +12,7 @@ import {
   urlToApiAccountWhoAmI,
   urlToApiDocPublished,
   urlToApiVersions,
+  urlToCasFile,
   urlToFiles,
 } from './urls.js';
 
@@ -79,6 +79,13 @@ export const apiWhoAmI = async (): Promise<WhoAmIResponseBody> => {
   } else {
     return Promise.reject(await resp.json());
   }
+};
+
+export const apiFileExists = async (casKey: string): Promise<boolean> => {
+  const response = await fetch(urlToCasFile(casKey), {
+    method: 'HEAD',
+  });
+  return response.ok && response.status === 200;
 };
 
 export const apiPostFile = async (

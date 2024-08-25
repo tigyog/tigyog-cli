@@ -1,16 +1,43 @@
 import * as fs from 'fs/promises';
 import * as mime from 'mime-types';
+import { extension } from 'mime-types';
 import { File, FormData } from 'node-fetch'; // TODO upgrade node, use native FormData and File
+import { createHash } from 'node:crypto';
 
-import { apiPostFile } from './apiClient.js';
+import { apiFileExists, apiPostFile } from './apiClient.js';
 
-export const postCasFileWithMimeType = async (
-  filePath: string,
+const computeCasKey = async (
+  buffer: Buffer,
   mimeType: string,
 ): Promise<string> => {
+  // Same as on the server-side
+
+  const contentHash = createHash('sha256').update(buffer).digest('hex');
+  const fileExtension = extension(mimeType);
+  if (!fileExtension) {
+    throw new Error(`Unknown MIME type: ${mimeType}`);
+  }
+  return `${contentHash}.${fileExtension}`;
+};
+
+export const postBufferWithMimeType = async ({
+  buffer,
+  mimeType,
+  filePath,
+}: {
+  buffer: Buffer;
+  mimeType: string;
+  filePath: string;
+}): Promise<string> => {
+  const expectedKey = await computeCasKey(buffer, mimeType);
+  if (await apiFileExists(expectedKey)) {
+    console.log('File already uploaded:', expectedKey);
+    return expectedKey;
+  }
+  console.log('Uploading file:', filePath);
+
   const formData = new FormData();
-  const buf = await fs.readFile(filePath);
-  const file = new File([buf], filePath, { type: mimeType });
+  const file = new File([buffer], filePath, { type: mimeType });
   formData.append('file', file, filePath);
   const { key } = await apiPostFile(formData);
   console.log('Posted file', filePath);
@@ -25,7 +52,11 @@ export const postCasFile = async (filePath: string): Promise<string> => {
 
   const mimeType = mime.lookup(filePath);
   if (!mimeType) throw new Error(`Expected mime type for ${filePath}`);
-  const key = await postCasFileWithMimeType(filePath, mimeType);
+  const key = await postBufferWithMimeType({
+    buffer: await fs.readFile(filePath),
+    mimeType,
+    filePath,
+  });
   filepathToKey[filePath] = key;
   return key;
 };
