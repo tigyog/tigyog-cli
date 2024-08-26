@@ -33,7 +33,7 @@
     "/dist/**/*.js"
   ],
   "bin": {
-    "tigyog": "./bin/tigyog.js"
+    "tigyog": "bin/tigyog.js"
   },
   "engines": {
     "node": ">=16.11"
