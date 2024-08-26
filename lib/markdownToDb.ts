@@ -237,7 +237,7 @@ const fromNode = (ctx: Ctx, node: Content): DbNode[] => {
         {
           type: 'blockcode',
           children: [{ text: node.value }],
-          ...(node.lang ? { language: node.lang } : {}),
+          language: node.lang ?? 'txt',
         },
       ];
     case 'heading':
