@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { createRequire } from 'module';
 import { exit } from 'process';
 
 import { apiWhoAmI } from './lib/apiClient.js';
@@ -6,6 +7,8 @@ import { deleteSession, getSession, setSession } from './lib/config.js';
 import { fmtCommand } from './lib/fmt.js';
 import { initCommand } from './lib/initCommand.js';
 import { publishCommand } from './lib/publish.js';
+
+const packageJson = createRequire(import.meta.url)('../package.json');
 
 const showWhoAmI = async () => {
   await apiWhoAmI()
@@ -26,7 +29,10 @@ const showWhoAmI = async () => {
 
 const program = new Command();
 
-program.name('tigyog').description('Official CLI for https://tigyog.app');
+program
+  .name('tigyog')
+  .description('Official CLI for https://tigyog.app')
+  .version(packageJson.version);
 
 program
   .command('init')
