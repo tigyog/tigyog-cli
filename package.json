@@ -1,6 +1,6 @@
 {
   "name": "tigyog-cli",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "main": "dist/tigyog.js",
   "scripts": {
     "build": "rm -rf dist && tsc --build",

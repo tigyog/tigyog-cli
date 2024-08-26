@@ -79,10 +79,7 @@ const ensureLiHasB = (li: ListItem): void => {
   }
 };
 
-const fmtMarkdownFile = async (filepath: string) => {
-  const inStr = await fs.readFile(filepath, {
-    encoding: 'utf8',
-  });
+const fmtFileContents = async (inStr: string) => {
   const root = parseMarkdown(inStr);
   addPromptIds(root);
 
@@ -124,15 +121,22 @@ const fmtMarkdownFile = async (filepath: string) => {
     return undefined;
   });
 
-  const outStr = stringifyMarkdownRoot(root);
+  return stringifyMarkdownRoot(root);
+};
+
+const fmtFileAtPath = async (filepath: string) => {
+  const inStr = await fs.readFile(filepath, {
+    encoding: 'utf8',
+  });
+  const outStr = await fmtFileContents(inStr);
   await fs.writeFile(filepath, outStr, 'utf8');
   console.log('Formatted file', filepath);
 };
 
-export async function fmtCommand(courseDir: string) {
-  for await (const filepath of tree(courseDir)) {
+export async function fmtCommand(path: string) {
+  for await (const filepath of tree(path)) {
     if (filepath.endsWith('.tigyog.md')) {
-      await fmtMarkdownFile(filepath);
+      await fmtFileAtPath(filepath);
     }
   }
 }

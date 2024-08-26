@@ -39,11 +39,11 @@ program
   .command('fmt')
   .description('Prepare files for publishing, e.g. add IDs to buttons')
   .argument(
-    '[coursedir]',
-    'path to course directory (default: current directory)',
+    '[path]',
+    'path to course directory or file (default: current directory)',
   )
-  .action(async (courseDir) => {
-    await fmtCommand(courseDir ?? '.');
+  .action(async (path) => {
+    await fmtCommand(path ?? '.');
   });
 
 program
