@@ -151,12 +151,13 @@ const fromParagraph = (
       },
     ];
   } else {
-    return [
-      {
-        type: 'p',
-        children: fromNodes(ctx, node.children) as DbInline[],
-      },
-    ];
+    const children = fromNodes(ctx, node.children) as DbInline[];
+    if (children.length === 0) {
+      console.warn('Warning: Empty paragraph found');
+      return [{ type: 'p', children: [{ text: '' }] }];
+    } else {
+      return [{ type: 'p', children }];
+    }
   }
 };
 
