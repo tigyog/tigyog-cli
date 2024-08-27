@@ -31,6 +31,7 @@ import {
   DbNonRootBlock,
 } from './types/db.js';
 import { visitTexts } from './visitors.js';
+import { smartQuotes } from './typography.js';
 
 export type Ctx = {
   currentFilePath: string;
@@ -366,13 +367,6 @@ const lessonFromRoot = (
     texMacros: (yaml['texMacros'] as string) ?? '',
     slug: basename(ctx.currentFilePath).split('.')[0]!,
   };
-};
-
-// TODO single quotes, dashes
-const smartQuotes = (text: string): string => {
-  text = text.replace(/"(?=\w|$)/g, '“');
-  text = text.replace(/(?<=\w|^)"/g, '”');
-  return text;
 };
 
 export const fromMarkdownFile = async (
