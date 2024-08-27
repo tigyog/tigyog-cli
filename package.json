@@ -4,7 +4,7 @@
   "main": "dist/tigyog.js",
   "scripts": {
     "build": "rm -rf dist && tsc --build",
-    "prepack": "npm run build",
+    "prepack": "npm install && npm run build && git diff --exit-code",
     "prune": "ts-prune"
   },
   "dependencies": {
