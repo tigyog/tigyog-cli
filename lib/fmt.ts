@@ -103,18 +103,26 @@ const fmtFileContents = async (inStr: string) => {
           promptDirective.attributes['id'] = makePromptId();
       } else {
         if (parent !== null && i !== null && list.children.length > 1) {
-          parent.children.splice(i, 0, {
-            type: 'paragraph',
-            children: [
-              {
-                type: 'textDirective',
-                name: 'buttons',
-                attributes: { id: makePromptId() },
-                children: [],
-              },
-            ],
-          });
-          return i + 2;
+          const newButtonsDirective: TextDirective = {
+            type: 'textDirective',
+            name: 'buttons',
+            attributes: { id: makePromptId() },
+            children: [],
+          };
+          const prevParagraph = parent.children[i - 1];
+          if (prevParagraph && prevParagraph.type === 'paragraph') {
+            prevParagraph.children.push(
+              { type: 'text', value: '\n' },
+              newButtonsDirective,
+            );
+            return i + 1;
+          } else {
+            parent.children.splice(i, 0, {
+              type: 'paragraph',
+              children: [newButtonsDirective],
+            });
+            return i + 2;
+          }
         }
       }
     }
