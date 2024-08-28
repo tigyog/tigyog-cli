@@ -1,5 +1,3 @@
-// TODO dashes
-
 export const smartQuotes = (text: string): string => {
   // Double quotes
   text = text.replace(/(\W|^)"(\w)/g, '$1“$2');
@@ -12,5 +10,15 @@ export const smartQuotes = (text: string): string => {
   // Apostrophe
   text = text.replace(/(\w)'(\w)/g, '$1’$2');
 
+  return text;
+};
+
+export const smartDashes = (text: string): string => {
+  return text.replace(/(\s|^)--(\s|$)/g, '$1–$2');
+};
+
+export const typography = (text: string): string => {
+  text = smartQuotes(text);
+  text = smartDashes(text);
   return text;
 };

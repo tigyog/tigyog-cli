@@ -30,8 +30,8 @@ import {
   DbNode,
   DbNonRootBlock,
 } from './types/db.js';
+import { typography } from './typography.js';
 import { visitTexts } from './visitors.js';
-import { smartQuotes } from './typography.js';
 
 export type Ctx = {
   currentFilePath: string;
@@ -384,7 +384,7 @@ export const fromMarkdownFile = async (
   addPromptIds(root);
 
   visitTexts(root, (text) => {
-    text.value = smartQuotes(text.value);
+    text.value = typography(text.value);
   });
 
   const yaml = getYAML(root);
